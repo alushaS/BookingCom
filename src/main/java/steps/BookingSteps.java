@@ -2,8 +2,8 @@ package steps;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -12,22 +12,20 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import javax.lang.model.element.Element;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.codeborne.selenide.Selenide.*;
-import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static com.codeborne.selenide.WebDriverRunner.setWebDriver;
 
 public class BookingSteps {
 
     private String city;
+    private String place;
+    private String destination;
 
     @BeforeMethod
     public void initTest(){
@@ -77,13 +75,43 @@ public class BookingSteps {
         Assert.assertEquals(hotelRate.split(" ")[1], rate);
     }
 
+    @Given("User is looking for a taxi in {string} place")
+    public void userIsLookingForATaxi(String place) {
+        this.place = place;
+    }
 
-//    @Given("User provide information:")
-//    public void userProvideInformation(DataTable dataTable) {
-//        List<Map<String, String>> data = dataTable.asMaps(String.class, String.class);
-//        String name = data.get(0).get("name");
-//        String email = data.get(0).get("email");
-//        String phone = data.get(0).get("phone");
-//        System.out.println("Name: " + name);
-//    }
+    @When("User sets {string} as a destination")
+    public void userSetsDestination(String destination) {
+        this.destination = destination;
+    }
+
+    @Then("User searches for a taxi")
+    public void userSearchesForATaxi() {
+        open("https://www.booking.com/taxi/");
+        $x("//*[@name='pickup']").sendKeys(place);
+        $x("//*[@name='dropoff']").sendKeys(destination);
+    }
+
+    @And("Sets the date of the ride")
+    public void setsTheDateOfTheRide() {
+        $x("//*[@data-testid='taxi-date-time-picker-form-element-oneway']").click();
+        $x("//*[@data-date='2025-04-06']").click();
+    }
+
+    @And("Sets the time of the ride")
+    public void setsTheTimeOfTheRide() {
+        $x("//*[@name='hours-oneway']").selectOption(15);
+    }
+
+    @And("Sets the quantity of passengers")
+    public void setsTheQuantityOfPassengers() {
+        $x("//*[@data-testid='taxi-input-select-input-passengers']").selectOption(3);
+        $x("//*[@type='submit']").click();
+    }
+
+    @Then("Taxi category {string} should be on the search results page")
+    public void taxiCategoryStandardShouldBeOnTheSearchResultsPage(String taxiCategory) {
+        String category = $x(String.format("//h4[text() = '%s']", taxiCategory)).getText();
+        Assert.assertEquals(category, "Standard");
+    }
 }
